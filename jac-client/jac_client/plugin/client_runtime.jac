@@ -6,6 +6,10 @@ cl import from 'react-dom/client' {* as ReactDOM}
 cl {
 # JSX factory function - uses React.createElement
 def __jacJsx(tag: any, props: dict = {}, children: any = []) -> any {
+    # Handle fragments: when tag is None/null, use React.Fragment
+    if tag == None {
+        tag = React.Fragment;
+    }
 
     childrenArray = [];
     if children != None {

@@ -1,9 +1,5 @@
 """Sample Jac module containing client-side declarations."""
 
-cl import from jac:client_runtime {
-    renderJsxTree,
-}
-
 cl let API_LABEL: str = "Runtime Test";
 
 cl obj ButtonProps {

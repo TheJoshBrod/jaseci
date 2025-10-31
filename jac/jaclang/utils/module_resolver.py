@@ -118,15 +118,15 @@ def convert_to_js_import_path(path: str) -> str:
     """Convert Jac-style import path to JavaScript-style import path.
 
     Transforms relative paths to be valid JavaScript:
-    - .utils -> ./utils
-    - ..lib -> ../lib
-    - ...config -> ../../config
+    - .utils -> ./utils.js
+    - ..lib -> ../lib.js
+    - ...config -> ../../config.js
 
     Args:
         path: Jac-style import path (potentially with leading dots)
 
     Returns:
-        JavaScript-style import path
+        JavaScript-style import path with .js extension for relative imports
     """
     if not path:
         return path
@@ -147,11 +147,25 @@ def convert_to_js_import_path(path: str) -> str:
         # For single dot, we need ./
         # For multiple dots, convert to ../ patterns
         if dot_count == 1:
-            return "./" + rest_of_path if rest_of_path else "."
+            js_path = "./" + rest_of_path if rest_of_path else "."
         else:
             # Convert multiple dots to ../.. pattern
             parent_dirs = "../" * (dot_count - 1)
-            return parent_dirs[:-1] + ("/" + rest_of_path if rest_of_path else "")
+            js_path = parent_dirs[:-1] + ("/" + rest_of_path if rest_of_path else "")
+
+        # Add .js extension to relative imports if not already present
+        # Skip adding .js for special paths like "." or ".."
+        if js_path in (".", ".."):
+            return js_path
+
+        # Check if the path already ends with a file extension
+        # Common JavaScript module extensions
+        common_extensions = (".js", ".mjs", ".cjs", ".json", ".css", ".wasm")
+        if not js_path.endswith(common_extensions):
+            # No recognized extension found, add .js
+            js_path += ".js"
+
+        return js_path
 
     return path
 

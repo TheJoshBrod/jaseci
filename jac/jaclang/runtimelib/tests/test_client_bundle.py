@@ -29,13 +29,13 @@ class ClientBundleBuilderTests(TestCase):
 
         self.assertIn("function __jacJsx", bundle.code)
         # Check that registration mechanism is present
-        self.assertIn('moduleFunctions[funcName] = funcRef;', bundle.code)
-        self.assertIn('scope[funcName] = funcRef;', bundle.code)
-        self.assertIn('moduleGlobals[gName] = existing;', bundle.code)
-        self.assertIn('scope[gName] = defaultValue;', bundle.code)
+        self.assertIn("moduleFunctions[funcName] = funcRef;", bundle.code)
+        self.assertIn("scope[funcName] = funcRef;", bundle.code)
+        self.assertIn("moduleGlobals[gName] = existing;", bundle.code)
+        self.assertIn("scope[gName] = defaultValue;", bundle.code)
         # Check that actual client functions and globals are defined
-        self.assertIn('function client_page()', bundle.code)
-        self.assertIn('class ButtonProps', bundle.code)
+        self.assertIn("function client_page()", bundle.code)
+        self.assertIn("class ButtonProps", bundle.code)
         self.assertIn('const API_LABEL = "Runtime Test";', bundle.code)
         # Check hydration logic is present
         self.assertIn("__jacHydrateFromDom", bundle.code)
@@ -75,7 +75,7 @@ class ClientBundleBuilderTests(TestCase):
         # IMPORTANT: Ensure no ES6 import statements are in the bundle
         # (since everything is bundled together, we don't need module imports)
         self.assertNotIn("import {", bundle.code)
-        self.assertNotIn("from \"client_runtime\"", bundle.code)
+        self.assertNotIn('from "client_runtime"', bundle.code)
 
         # Check that client functions are registered
         self.assertIn("test_page", bundle.client_functions)
@@ -108,16 +108,18 @@ class ClientBundleBuilderTests(TestCase):
 
         # IMPORTANT: Ensure NO import statements remain
         self.assertNotIn("import {", bundle.code)
-        self.assertNotIn("from \"", bundle.code)
+        self.assertNotIn('from "', bundle.code)
         self.assertNotIn("from './", bundle.code)
-        self.assertNotIn("from \"./", bundle.code)
+        self.assertNotIn('from "./', bundle.code)
 
         # Check that all modules are bundled in the correct order
         # client_runtime should come first (transitive import)
         # then client_ui_components (direct import)
         # then main module code
         client_runtime_pos = bundle.code.find("// Imported .jac module: client_runtime")
-        ui_components_pos = bundle.code.find("// Imported .jac module: .client_ui_components")
+        ui_components_pos = bundle.code.find(
+            "// Imported .jac module: .client_ui_components"
+        )
         main_page_pos = bundle.code.find("function main_page()")
 
         self.assertGreater(ui_components_pos, client_runtime_pos)
@@ -137,26 +139,27 @@ class ClientBundleBuilderTests(TestCase):
         # Split bundle into lines and check for any import statements
         lines = bundle.code.split("\n")
         import_lines = [
-            line for line in lines
+            line
+            for line in lines
             if line.strip().startswith("import ") and " from " in line
         ]
 
         # Should be exactly 0 import statements
         self.assertEqual(
-            len(import_lines), 0,
-            f"Found {len(import_lines)} import statement(s) in bundle: {import_lines[:3]}"
+            len(import_lines),
+            0,
+            f"Found {len(import_lines)} import statement(s) in bundle: {import_lines[:3]}",
         )
 
         # Also verify using regex pattern
         import re
+
         import_pattern = r'^\s*import\s+.*\s+from\s+["\'].*["\'];?\s*$'
-        import_matches = [
-            line for line in lines
-            if re.match(import_pattern, line)
-        ]
+        import_matches = [line for line in lines if re.match(import_pattern, line)]
         self.assertEqual(
-            len(import_matches), 0,
-            f"Found import statements matching pattern: {import_matches[:3]}"
+            len(import_matches),
+            0,
+            f"Found import statements matching pattern: {import_matches[:3]}",
         )
 
     def test_transitive_imports_included(self) -> None:
@@ -183,8 +186,9 @@ class ClientBundleBuilderTests(TestCase):
         createState_def_pos = bundle.code.find("function createState(")
         createState_usage_pos = bundle.code.find("createState(")
         self.assertLess(
-            createState_def_pos, createState_usage_pos,
-            "createState must be defined before it's used"
+            createState_def_pos,
+            createState_usage_pos,
+            "createState must be defined before it's used",
         )
 
     def test_bundle_size_reasonable(self) -> None:
@@ -197,19 +201,23 @@ class ClientBundleBuilderTests(TestCase):
         simple_bundle = builder.build(simple_module)
 
         # Module with imports
-        (import_module,) = Jac.jac_import("client_app_with_relative_import", str(fixtures_dir))
+        (import_module,) = Jac.jac_import(
+            "client_app_with_relative_import", str(fixtures_dir)
+        )
         import_bundle = builder.build(import_module)
 
         # Bundle with imports should be larger (includes additional modules)
         self.assertGreater(
-            len(import_bundle.code), len(simple_bundle.code),
-            "Bundle with imports should be larger than simple bundle"
+            len(import_bundle.code),
+            len(simple_bundle.code),
+            "Bundle with imports should be larger than simple bundle",
         )
 
         # But not unreasonably large (should be less than 10x)
         self.assertLess(
-            len(import_bundle.code), len(simple_bundle.code) * 10,
-            "Bundle should not be unreasonably large"
+            len(import_bundle.code),
+            len(simple_bundle.code) * 10,
+            "Bundle should not be unreasonably large",
         )
 
     def test_import_path_conversion(self) -> None:
@@ -217,28 +225,16 @@ class ClientBundleBuilderTests(TestCase):
         from jaclang.utils import convert_to_js_import_path
 
         # Test single dot (current directory)
-        self.assertEqual(
-            convert_to_js_import_path(".module"),
-            "./module"
-        )
+        self.assertEqual(convert_to_js_import_path(".module"), "./module.js")
 
         # Test double dot (parent directory)
-        self.assertEqual(
-            convert_to_js_import_path("..module"),
-            "../module"
-        )
+        self.assertEqual(convert_to_js_import_path("..module"), "../module.js")
 
         # Test triple dot (grandparent directory)
-        self.assertEqual(
-            convert_to_js_import_path("...module"),
-            "../../module"
-        )
+        self.assertEqual(convert_to_js_import_path("...module"), "../../module.js")
 
         # Test absolute import (no dots)
-        self.assertEqual(
-            convert_to_js_import_path("module"),
-            "module"
-        )
+        self.assertEqual(convert_to_js_import_path("module"), "module")
 
     def test_cl_block_functions_exported(self) -> None:
         """Test that functions inside cl blocks are properly exported."""

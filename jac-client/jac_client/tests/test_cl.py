@@ -206,3 +206,49 @@ class ViteClientBundleBuilderTests(TestCase):
             
             # Cleanup
             builder.cleanup_temp_dir()
+
+    def test_jsx_fragments_and_spread_props(self) -> None:
+        """Test that JSX fragments and spread props work correctly."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # Create project with Vite installed
+            package_json, output_dir = self._create_test_project_with_vite(temp_path)
+            
+            # Initialize the Vite builder
+            builder = ViteClientBundleBuilder(
+                vite_package_json=package_json,
+                vite_output_dir=output_dir,
+                vite_minify=False,
+            )
+            
+            # Import the test module with fragments and spread props
+            fixtures_dir = Path(__file__).parent / "fixtures"
+            (module,) = Jac.jac_import("test_fragments_spread", str(fixtures_dir))
+            
+            # Build the bundle
+            bundle = builder.build(module, force=True)
+            
+            # Verify bundle structure
+            self.assertIsNotNone(bundle)
+            self.assertEqual(bundle.module_name, "test_fragments_spread")
+            self.assertIn("FragmentTest", bundle.client_functions)
+            self.assertIn("SpreadPropsTest", bundle.client_functions)
+            self.assertIn("MixedTest", bundle.client_functions)
+            self.assertIn("NestedFragments", bundle.client_functions)
+            
+            # Verify spread props handling (Object.assign is used by compiler)
+            self.assertIn("Object.assign", bundle.code)
+            
+            # Verify fragment test function exists
+            self.assertIn("function FragmentTest()", bundle.code)
+            
+            # Verify spread props test function exists
+            self.assertIn("function SpreadPropsTest()", bundle.code)
+            
+            # Verify bundle was written to output directory
+            bundle_files = list(output_dir.glob("client.*.js"))
+            self.assertGreater(len(bundle_files), 0, "Expected at least one bundle file")
+            
+            # Cleanup
+            builder.cleanup_temp_dir()
