@@ -7,9 +7,6 @@ In this tutorial we will cover how to setup and fully utilize the VS Code debugg
 
 If you want to learn more about the online debugger check out the [Jac Playground Tutorial](https://www.jac-lang.org/learn/jac_playground/). 
 
-!!! important
-    To get started, you will need Python 3.12 or later and jaclang 0.8.10 or later installed.
-
 !!! info
     You can write and run Jac code in any text editor, but currently, debugging is only supported in Visual Studio Code using the official Jac extension.
     This extension offers features such as breakpoints, syntax highlighting, error checking, and graph visualization.
@@ -20,9 +17,8 @@ If you want to learn more about the online debugger check out the [Jac Playgroun
 !!! info
     This is the information to set up the tools to use the Jac debugger. These steps should be followed ONLY ONCE.
 
-### Requirements
-- Python 3.12 or later
-- jaclang 0.8.10 or later 
+!!! important
+    To get started, you will need Python 3.12 or later and jaclang 0.8.10 or later installed.
 
 ### Jac Environment Setup
 
@@ -88,11 +84,44 @@ If you see this screen you successfully set up your Jac Debugger!
 
 --
 
-### How to use breakpoints
+Below are some examples of how to use the Jac Debugger 
 
-_TODO_
+### Breakpoints
+!!! note
+    This tutorial assumes you've never used a debugger. If you feel comfortable using a debugger skip to the [Graph Visualizer Tutorial Section](#graph-visualizer)
 
-### How to use the graph visualizer
+Below we have a basic example of a jac program with a function `complex_func` we want to debug.
+
+![Example of complex function](./assets/debugger/debugger-complex_function.png){: style="display: block; margin: auto;"}
+
+Lets say we are unsure of when line 9 runs and we want to use the debugger. We can set a breakpoint on that line by clicking on the circle that appears when we hover next to the line number
+
+![Example of setting breakpoint](assets/debugger/debugger-complex_function-breakpoint.png){: style="display: block; margin: auto;"}
+
+
+Once we set the breakpoint we can run the program with the debugger to better understand the program. Press the green run button in the `Run and Debug` on the top left of the toolbar
+
+
+![Example of running debugger](assets/debugger/debugger-complex_function-run.png){: style="display: block; margin: auto;"}
+
+Now that the debugger is running with our breakpoint, whenever the program is executing reaches a line with a breakpoint it will halt and show you with the menu below. 
+
+#### Debugger Options (in green):
+
+- Continue: Run until next breakpoint or program ends.
+- Step Over: Execute the next line (skip over function calls).
+- Step Into: Execute the next line or enter called functions.
+- Step Out: Run until the current function returns.
+- Restart: Rerun the program from the start.
+- Stop: Halt the program and exit the debugger.
+
+#### Variable Viewer (in red):
+
+These are the current values of all local and global variables the program is using when running. Use these to understand what is happening and what is the state of the program at any given breakpoint.
+
+![Options with debugger](assets/debugger/debugger-complex_function-options.png)
+
+### Graph Visualizer
 
 _TODO_
 
