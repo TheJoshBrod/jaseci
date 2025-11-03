@@ -1,11 +1,10 @@
 # Jac debugging in VS Code
 
 ---
-The first step in debugging a Jac program is deciding if you are using the online debugger with the [Jac Playground](https://www.jac-lang.org/playground/) or the VS Code Extension to debug on your own machine. 
+You can debug Jac programs either in the online [Jac Playground](https://www.jac-lang.org/playground/)
+ or locally in Visual Studio Code (VS Code) using the [Jac extension](https://marketplace.visualstudio.com/items?itemName=jaseci-labs.jaclang-extension).
 
-In this tutorial we will cover how to setup and fully utilize the VS Code debugger. 
-
-If you want to learn more about the online debugger check out the [Jac Playground Tutorial](https://www.jac-lang.org/learn/jac_playground/). 
+In this tutorial, we’ll focus on setting up and using the VS Code debugger.
 
 !!! info
     You can write and run Jac code in any text editor, but currently, debugging is only supported in Visual Studio Code using the official Jac extension.
@@ -15,10 +14,10 @@ If you want to learn more about the online debugger check out the [Jac Playgroun
 ---
 
 !!! info
-    This is the information to set up the tools to use the Jac debugger. These steps should be followed ONLY ONCE.
+    This is the information to set up the tools to use the Jac debugger. These steps only need to be completed once per machine to install the Jac debugging tools.
 
 !!! important
-    To get started, you will need Python 3.12 or later and jaclang 0.8.10 or later installed.
+    To get started, you will need Python 3.12 or later and jaclang 0.8.10 or later installed. You can check your Python version by running `python --version` or `python3 --version` in a terminal AND `jac --version`
 
 ### Jac Environment Setup
 
@@ -30,7 +29,7 @@ Make sure you have VS Code text editor installed on your device.
 
 If you do not have it installed go to [Visual Studio Code](https://code.visualstudio.com/) to install the program.
 
-Once, installed follow the video below:
+Once installed, follow the video below:
 
 1. Open settings menu
 2. Search for "breakpoints"
@@ -38,7 +37,7 @@ Once, installed follow the video below:
 
 _TODO: insert video here_
 <video width="640" height="360" controls>
-  <source src=".assets/debugger/1030.mp4" type="video/mp4">
+  <source src="assets/debugger/1030.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -46,7 +45,7 @@ _TODO: insert video here_
 
 Once VS Code is installed, go to the extensions tab and search `jac` and install the following extension:
 
-![Jac Extension Page](./assets/debugger/debugger-extension.png){: style="display: block; margin: auto;"}
+![Jac Extension Page](assets/debugger/debugger-extension.png){: style="display: block; margin: auto;"}
 
 
 ## Setup (every time)
@@ -58,17 +57,17 @@ Once VS Code is installed, go to the extensions tab and search `jac` and install
 
 A `launch.json` file is a vscode configuration file that tells the debugger how to run the program (i.e. what args to pass in, what version of Jac to use, etc.)
 
-First opening the `Run and Debug` menu on the VS Code tool bar, selecting we want to `create a launch.json file`.
+First, open the `Run and Debug` menu on the VS Code toolbar, and select `create a launch.json file`.
 
 
-![Create Launch Dot Json](./assets/debugger/debugger-create-launch_dot_json.png){: style="display: block; margin: auto;"}
+![Create Launch Dot Json](assets/debugger/debugger-create-launch_dot_json.png){: style="display: block; margin: auto;"}
 
 
 
 This will open a menu prompting you to select which templated `launch.json` to create. We want to select `Jac Debug`.
 
 
-![Create Jac's Launch Dot Json](./assets/debugger/debugger-create-jac-launch_dot_json.png){: style="display: block; margin: auto;"}
+![Create Jac's Launch Dot Json](assets/debugger/debugger-create-jac-launch_dot_json.png){: style="display: block; margin: auto;"}
 
 
 
@@ -76,14 +75,12 @@ This will create the templated `launch.json` file and your screen should look so
 
 
 
-![Verify Jac's Launch Dot Json Looks Correct](./assets/debugger/debugger-verify-launch_dot_json.png){: style="display: block; margin: auto;"}
+![Verify Jac's Launch Dot Json Looks Correct](assets/debugger/debugger-verify-launch_dot_json.png){: style="display: block; margin: auto;"}
 
 
 If you see this screen you successfully set up your Jac Debugger!
 
 ## Debugger Tutorial
-
---
 
 Below are some examples of how to use the Jac Debugger 
 
@@ -93,9 +90,11 @@ Below are some examples of how to use the Jac Debugger
 
 Below we have a basic example of a jac program with a function `complex_func` we want to debug.
 
-![Example of complex function](./assets/debugger/debugger-complex_function.png){: style="display: block; margin: auto;"}
+![Example of complex function](assets/debugger/debugger-complex_function.png){: style="display: block; margin: auto;"}
 
-Lets say we are unsure of when line 9 runs and we want to use the debugger. We can set a breakpoint on that line by clicking on the circle that appears when we hover next to the line number
+Let's say we are unsure of when line 9 runs and we want to use the debugger to set some breakpoints. Breakpoints let you pause your program at specific lines so you can inspect variables and execution flow step-by-step. 
+
+We can set a breakpoint on that line by clicking on the circle that appears when we hover next to the line number. 
 
 ![Example of setting breakpoint](assets/debugger/debugger-complex_function-breakpoint.png){: style="display: block; margin: auto;"}
 
@@ -105,7 +104,7 @@ Once we set the breakpoint we can run the program with the debugger to better un
 
 ![Example of running debugger](assets/debugger/debugger-complex_function-run.png){: style="display: block; margin: auto;"}
 
-Now that the debugger is running with our breakpoint, whenever the program is executing reaches a line with a breakpoint it will halt and show you with the menu below. 
+Now that the debugger is running with our breakpoint, whenever the program execution reaches a line with a breakpoint it will halt and show you with the menu below. 
 
 #### Debugger Options (in green):
 
@@ -125,7 +124,7 @@ These are the current values of all local and global variables the program is us
 ### Graph Visualizer
 
 !!! note
-    This tutorial assumes you DO know how to use a debugger. If you do NOT feel uncomfortable using a debugger go back to the [Breakpoints Tutorial Section](#Breakpoints)
+    If you are not yet comfortable using a debugger, go back to the [Breakpoints Tutorial Section](#breakpoints)
 
 Now that we have the debugger working we can use the graph visualizer to better represent the graph.
 
@@ -159,7 +158,7 @@ First we want to open the visualization tool:
 
 1. Open the VS Code Command Palette
     This can be done by either:
-    - On your keyboard pressing `ctrl+shift+p` 
+    - On your keyboard pressing `ctrl+shift+p` or `⌘+⇧+p` on mac
     - On the top menu bar pressing `view > command palette`
 
 2. Type `jacvis` and clicking on the option labeled `jacvis: Visualize Jaclang Graph`
@@ -176,7 +175,7 @@ Then we can step through the program as normal and new nodes should appear as fo
 
 _TODO: insert video here_
 <video width="640" height="360" controls>
-  <source src=".assets/debugger/1030.mp4" type="video/mp4">
+  <source src="assets/debugger/1030.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
