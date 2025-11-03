@@ -9,13 +9,16 @@ import shutil
 import subprocess
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Sequence, TYPE_CHECKING
 
 from jaclang.runtimelib.client_bundle import (
     ClientBundle,
     ClientBundleBuilder,
     ClientBundleError,
 )
+
+if TYPE_CHECKING:
+    from jaclang.compiler.codeinfo import ClientManifest
 
 
 class ViteClientBundleBuilder(ClientBundleBuilder):
@@ -41,6 +44,139 @@ class ViteClientBundleBuilder(ClientBundleBuilder):
         self.vite_package_json = vite_package_json
         self.vite_minify = vite_minify
 
+    def _process_imports(
+        self, manifest: ClientManifest | None, module_path: Path
+    ) -> list[Path | None]:  # type: ignore[override]
+        """Process client imports for Vite bundling.
+
+        Only mark modules as bundled when we actually inline their code (.jac files we compile
+        and local .js files we embed). Bare package specifiers (e.g., "antd") are left as real
+        ES imports so Vite can resolve and bundle them.
+        """
+        # TODO: return pure js files separately
+        imported_js_modules: list[Path | None] = []
+
+        if manifest and manifest.imports:
+            for _, import_path in manifest.imports.items():
+                import_path_obj = Path(import_path)
+
+                if import_path_obj.suffix == ".js":
+                    # Inline local JS files and mark as bundled
+                    try:
+
+                        imported_js_modules.append(import_path_obj)
+                    except FileNotFoundError:
+                        imported_js_modules.append(None)
+
+                elif import_path_obj.suffix == ".jac":
+                    # Compile .jac imports and include transitive .jac imports
+                    try:
+                        imported_js_modules.append(import_path_obj)
+                    except ClientBundleError:
+                        imported_js_modules.append(None)
+
+                else:
+                    # Non .jac/.js entries (likely bare specifiers) should be handled by Vite.
+                    # Do not inline or mark as bundled so their import lines are preserved.
+                    pass
+
+        return imported_js_modules
+
+    def _compile_dependencies_recursively(
+        self,
+        module_path: Path,
+        visited: set[Path] | None = None,
+        is_root: bool = False,
+        collected_exports: set[str] | None = None,
+        collected_globals: dict[str, Any] | None = None,
+        runtime_js: str | None = None,
+    ) -> None:
+        """Recursively compile/copy .jac/.js imports to temp, skipping bundling.
+
+        Only prepares dependency JS artifacts for Vite by writing compiled JS (.jac)
+        or copying local JS (.js) into the temp directory. Bare specifiers are left
+        untouched for Vite to resolve.
+        """
+        from jaclang.runtimelib.machine import JacMachine as Jac
+
+        if visited is None:
+            visited = set()
+        if collected_exports is None:
+            collected_exports = set()
+        if collected_globals is None:
+            collected_globals = {}
+
+        module_path = module_path.resolve()
+        if module_path in visited:
+            return
+        visited.add(module_path)
+        manifest = None
+        if not is_root:
+            # Compile current module to JS and append registration
+            module_js, mod = self._compile_to_js(module_path)
+            manifest = mod.gen.client_manifest if mod else None
+
+            # Extract exports from manifest
+            exports_list = self._extract_client_exports(manifest)
+            collected_exports.update(exports_list)
+
+            # Build globals map using manifest.globals_values only for non-root
+            non_root_globals: dict[str, Any] = {}
+            if manifest:
+                for name in manifest.globals:
+                    non_root_globals[name] = manifest.globals_values.get(name)
+            collected_globals.update(non_root_globals)
+
+            exposure_js = self._generate_global_exposure_code(exports_list)
+            registration_js = self._generate_registration_js(
+                module_path.stem,
+                exports_list,
+                non_root_globals,
+            )
+            export_block = (
+                f"export {{ {', '.join(exports_list)} }};\n" if exports_list else ""
+            )
+
+            combined_js = f"{module_js}\n{exposure_js}\n{registration_js}\n{runtime_js}\n{export_block}"
+            if self.vite_package_json is not None:
+                (
+                    self.vite_package_json.parent / "temp" / f"{module_path.stem}.js"
+                ).write_text(combined_js, encoding="utf-8")
+        else:
+            mod = Jac.program.mod.hub.get(str(module_path))
+            manifest = mod.gen.client_manifest if mod else None
+
+        if not manifest or not manifest.imports:
+            return
+
+        for _name, import_path in manifest.imports.items():
+            path_obj = Path(import_path).resolve()
+            # Avoid re-processing
+            if path_obj in visited:
+                continue
+            if path_obj.suffix == ".jac":
+                # Recurse into transitive deps
+                self._compile_dependencies_recursively(
+                    path_obj,
+                    visited,
+                    is_root=False,
+                    collected_exports=collected_exports,
+                    collected_globals=collected_globals,
+                    runtime_js=runtime_js,
+                )
+            elif path_obj.suffix == ".js":
+                try:
+                    js_code = path_obj.read_text(encoding="utf-8")
+                    if self.vite_package_json is not None:
+                        (
+                            self.vite_package_json.parent / "temp" / path_obj.name
+                        ).write_text(js_code, encoding="utf-8")
+                except FileNotFoundError:
+                    pass
+            else:
+                # Bare specifiers or other assets handled by Vite
+                continue
+
     def _compile_bundle(
         self,
         module: ModuleType,
@@ -53,48 +189,52 @@ class ViteClientBundleBuilder(ClientBundleBuilder):
         mod = Jac.program.mod.hub.get(str(module_path))
         manifest = mod.gen.client_manifest if mod else None
 
-        # Use base class method to process imports
-        import_pieces, bundled_module_names = self._process_imports(
-            manifest, module_path
+        module_js, _ = self._compile_to_js(module_path)
+
+        # Compile runtime to JS and add to temp for Vite to consume
+        runtime_js, mod = self._compile_to_js(self.runtime_path)
+
+        # Collect exports/globals across root and recursive deps
+        collected_exports: set[str] = set(self._extract_client_exports(manifest))
+        client_globals_map = self._extract_client_globals(manifest, module)
+        collected_globals: dict[str, Any] = dict(client_globals_map)
+
+        # Recursively prepare dependencies and accumulate symbols
+        self._compile_dependencies_recursively(
+            module_path,
+            is_root=True,
+            collected_exports=collected_exports,
+            collected_globals=collected_globals,
+            runtime_js=runtime_js,
         )
 
-        # Compile main module and strip import statements for bundled modules
-        module_js, _ = self._compile_to_js(module_path)
-        module_js = self._strip_import_statements(module_js, bundled_module_names)
-
-        # compile runtime to js and add to import_pieces
-        runtime_js, _ = self._compile_to_js(self.runtime_path)
-        import_pieces.append(f"// Imported runtime module: {self.runtime_path}")
-        import_pieces.append(runtime_js)
-        import_pieces.append("")
-
-        # Use base class methods to extract exports and globals
-        client_exports = self._extract_client_exports(manifest)
-        client_globals_map = self._extract_client_globals(manifest, module)
+        client_exports = sorted(collected_exports)
+        client_globals_map = collected_globals
 
         bundle_pieces = []
-
-        # Add imported modules (which may include client_runtime if explicitly imported)
-        if import_pieces:
-            bundle_pieces.extend(import_pieces)
 
         # Add main module (without registration_js - we'll handle that in Jac init script)
         bundle_pieces.extend(
             [
+                "// Runtime module:",
+                runtime_js,
                 f"// Client module: {module.__name__}",
                 module_js,
                 "",
             ]
         )
+
         # Add global exposure code first (before Jac initialization)
         global_exposure_code = self._generate_global_exposure_code(client_exports)
         bundle_pieces.append(global_exposure_code)
 
         # Add Jac runtime initialization script (includes globals)
         jac_init_script = self._generate_jac_init_script(
-            module.__name__, client_exports, client_globals_map
+            module_path.stem, client_exports, client_globals_map
         )
         bundle_pieces.append(jac_init_script)
+
+        # Do not add export block for root since output is iife
 
         # Use Vite bundling instead of simple concatenation
         bundle_code, bundle_hash = self._bundle_with_vite(
@@ -136,7 +276,8 @@ class ViteClientBundleBuilder(ClientBundleBuilder):
         temp_dir.mkdir(exist_ok=True)
 
         # Create entry file with stitched content
-        entry_file = temp_dir / "main_entry.js"
+        entry_file = temp_dir / "app.js"
+
         entry_content = "\n".join(piece for piece in bundle_pieces if piece is not None)
         entry_file.write_text(entry_content, encoding="utf-8")
 
@@ -202,6 +343,8 @@ class ViteClientBundleBuilder(ClientBundleBuilder):
                 }},
                 }},
                 minify: {minify_setting}, // Configurable minification
+            }},
+            resolve: {{
             }}
             }});
         """
@@ -300,3 +443,28 @@ class ViteClientBundleBuilder(ClientBundleBuilder):
         if temp_dir.exists():
             with contextlib.suppress(OSError):
                 shutil.rmtree(temp_dir)
+
+    @staticmethod
+    def _generate_registration_js(
+        module_name: str,
+        client_functions: Sequence[str],
+        client_globals: dict[str, Any],
+    ) -> str:
+        """Generate registration code that exposes client symbols globally."""
+        globals_entries: list[str] = []
+        for name, value in client_globals.items():
+            identifier = json.dumps(name)
+            try:
+                value_literal = json.dumps(value)
+            except TypeError:
+                value_literal = "null"
+            globals_entries.append(f"{identifier}: {value_literal}")
+
+        globals_literal = (
+            "{ " + ", ".join(globals_entries) + " }" if globals_entries else "{}"
+        )
+        functions_literal = json.dumps(list(client_functions))
+        module_literal = json.dumps(module_name)
+
+        # Use the registration function from client_runtime.jac
+        return f"__jacRegisterClientModule({module_literal}, {functions_literal}, {globals_literal});"
