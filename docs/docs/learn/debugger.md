@@ -36,6 +36,7 @@ Once, installed follow the video below:
 2. Search for "breakpoints"
 3. Select `Debug: Allow Breakpoints Everywhere`
 
+_TODO: insert video here_
 <video width="640" height="360" controls>
   <source src=".assets/debugger/1030.mp4" type="video/mp4">
   Your browser does not support the video tag.
@@ -123,5 +124,62 @@ These are the current values of all local and global variables the program is us
 
 ### Graph Visualizer
 
-_TODO_
+!!! note
+    This tutorial assumes you DO know how to use a debugger. If you do NOT feel uncomfortable using a debugger go back to the [Breakpoints Tutorial Section](#Breakpoints)
+
+Now that we have the debugger working we can use the graph visualizer to better represent the graph.
+
+Below is a code snippet of the graph we will be using. This graph will be representing who knows each other.
+
+We can create a graph by adding some connections like:
+```jac
+node Person{
+    has age: int;
+}
+
+with entry {
+    # Create people nodes
+    jonah = Person(16);
+    sally = Person(17);
+    teacher = Person(42);
+    jonah_mom = Person(45);
+
+    # Connect Jonah to root
+    root ++> jonah;
+
+    # Create Jonah's relationships
+    jonah ++> jonah_mom;
+    jonah ++> teacher;
+    jonah ++> sally;
+}
+```
+
+
+First we want to open the visualization tool:
+
+1. Open the VS Code Command Palette
+    This can be done by either:
+    - On your keyboard pressing `ctrl+shift+p` 
+    - On the top menu bar pressing `view > command palette`
+
+2. Type `jacvis` and clicking on the option labeled `jacvis: Visualize Jaclang Graph`
+
+    This should open up a side bar window that looks like the below:
+
+    ![opened visualization tool](assets/debugger/debugger-visualization-open-tool.png)
+
+Next we can set a break point in our code as shown below. Then we run the debugger and it should stop at the line below.
+
+![Set first breakpoint in code](assets/debugger/debugger-visualization-breakpoint.png)
+
+Then we can step through the program as normal and new nodes should appear as follows:
+
+_TODO: insert video here_
+<video width="640" height="360" controls>
+  <source src=".assets/debugger/1030.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+
+As shown in the video, these nodes will show their values and can be dragged around to better visualize the data. 
 
