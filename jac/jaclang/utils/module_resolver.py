@@ -51,6 +51,8 @@ def _candidate_from(base: str, parts: list[str]) -> Optional[Tuple[str, str]]:
         return candidate + ".jac", "jac"
     if os.path.isfile(candidate + ".py"):
         return candidate + ".py", "py"
+    if os.path.isfile(candidate + ".js"):
+        return candidate + ".js", "js"
     return None
 
 
@@ -93,11 +95,14 @@ def resolve_module(target: str, base_path: str) -> Tuple[str, str]:
             return res
         target_jac = actual_parts[-1] + ".jac"
         target_py = actual_parts[-1] + ".py"
+        target_js = actual_parts[-1] + ".js"
         for root, _, files in os.walk(jacpath):
             if target_jac in files:
                 return os.path.join(root, target_jac), "jac"
             if target_py in files:
                 return os.path.join(root, target_py), "py"
+            if target_js in files:
+                return os.path.join(root, target_js), "js"
 
     return os.path.join(base_dir, *actual_parts), "py"
 

@@ -66,6 +66,9 @@ class ViteClientBundleBuilderTests(TestCase):
         output_dir = temp_path / "static" / "client" / "js"
         output_dir.mkdir(parents=True, exist_ok=True)
         
+        temp_dir = temp_path / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        
         return package_json, output_dir
 
     def test_build_bundle_with_vite(self) -> None:
@@ -197,6 +200,9 @@ class ViteClientBundleBuilderTests(TestCase):
             self.assertIn("function CardTest()", bundle.code)
             self.assertIn('const APP_NAME = "Ant Design Test";', bundle.code)
             
+            # verify antd components are present
+            self.assertIn("ButtonGroup", bundle.code)
+
             # Verify the Ant Design fixture content is present
             self.assertIn("Testing Ant Design integration", bundle.code)
             
@@ -207,6 +213,106 @@ class ViteClientBundleBuilderTests(TestCase):
             # Cleanup
             builder.cleanup_temp_dir()
 
+    def test_relative_import(self) -> None:
+        """Test that relative imports work correctly in Vite bundling."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # Create project with Vite installed
+            package_json, output_dir = self._create_test_project_with_vite(temp_path, include_antd=True)
+            
+            # Initialize the Vite builder
+            builder = ViteClientBundleBuilder(
+                vite_package_json=package_json,
+                vite_output_dir=output_dir,
+                vite_minify=False,
+            )
+            
+            # Import the test module with relative import
+            fixtures_dir = Path(__file__).parent / "fixtures"
+            (module,) = Jac.jac_import("relative_import", str(fixtures_dir))
+            
+            # Build the bundle
+            bundle = builder.build(module, force=True)
+            
+            # Verify bundle structure
+            self.assertIsNotNone(bundle)
+            self.assertEqual(bundle.module_name, "relative_import")
+            self.assertIn("RelativeImport", bundle.client_functions)
+            self.assertIn("main", bundle.client_functions)
+            self.assertIn("CustomButton", bundle.code)
+            
+            # Verify bundle code contains expected content
+            self.assertIn("function RelativeImport()", bundle.code)
+            self.assertIn("function main()", bundle.code)
+            
+            # Verify that the relative import (Button from .button) is properly resolved
+            self.assertIn("ButtonGroup", bundle.code)
+            
+            # Verify the Jac initialization is present
+            self.assertIn("__jacRegisterClientModule", bundle.code)
+            
+            # Verify bundle was written to output directory
+            bundle_files = list(output_dir.glob("client.*.js"))
+            self.assertGreater(len(bundle_files), 0, "Expected at least one bundle file")
+            
+            # Cleanup
+            builder.cleanup_temp_dir()
+
+    def test_js_import(self) -> None:
+        """Test that JavaScript file imports work correctly in Vite bundling."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            # Create project with Vite installed
+            package_json, output_dir = self._create_test_project_with_vite(temp_path)
+            
+            # Initialize the Vite builder
+            builder = ViteClientBundleBuilder(
+                vite_package_json=package_json,
+                vite_output_dir=output_dir,
+                vite_minify=False,
+            )
+            
+            # Import the test module with JavaScript import
+            fixtures_dir = Path(__file__).parent / "fixtures"
+            (module,) = Jac.jac_import("js_import", str(fixtures_dir))
+            
+            # Build the bundle
+            bundle = builder.build(module, force=True)
+            
+            # Verify bundle structure
+            self.assertIsNotNone(bundle)
+            self.assertEqual(bundle.module_name, "js_import")
+            self.assertIn("JsImportTest", bundle.client_functions)
+            self.assertIn("Main", bundle.client_functions)
+            self.assertIn("JS_IMPORT_LABEL", bundle.client_globals)
+            
+            # Verify bundle code contains expected content
+            self.assertIn("function JsImportTest()", bundle.code)
+            self.assertIn("function Main()", bundle.code)
+            self.assertIn('const JS_IMPORT_LABEL = "JavaScript Import Test";', bundle.code)
+            
+            # Verify JavaScript imports are present in the bundle
+            # The JavaScript functions should be available in the bundle
+            self.assertIn("formatMessage", bundle.code)
+            self.assertIn("calculateSum", bundle.code)
+            self.assertIn("JS_CONSTANT", bundle.code)
+            self.assertIn("MessageFormatter", bundle.code)
+            
+            # Verify the JavaScript utility code is included
+            self.assertIn("Hello,", bundle.code)  # From formatMessage function
+            self.assertIn("Imported from JavaScript", bundle.code)  # From JS_CONSTANT
+            
+            # Verify the Jac initialization is present
+            self.assertIn("__jacRegisterClientModule", bundle.code)
+            
+            # Verify bundle was written to output directory
+            bundle_files = list(output_dir.glob("client.*.js"))
+            self.assertGreater(len(bundle_files), 0, "Expected at least one bundle file")
+            
+            # Cleanup
+            builder.cleanup_temp_dir()
+            
     def test_jsx_fragments_and_spread_props(self) -> None:
         """Test that JSX fragments and spread props work correctly."""
         with tempfile.TemporaryDirectory() as temp_dir:

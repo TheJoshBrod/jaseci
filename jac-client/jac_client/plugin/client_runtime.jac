@@ -60,7 +60,8 @@ let __jacReactiveContext = {
     "reactRoot": None,          # Store the React 18 root instance
     "currentComponent": None,   # Current component ID being rendered
     "currentEffect": None,      # Current effect for dependency tracking
-    "router": None             # Global router instance
+    "router": None,            # Global router instance
+    "mountedComponents": {}     # Track which components have mounted (for onMount)
 };
 
 # Create a reactive signal (primitive value)
@@ -118,6 +119,39 @@ def createState(initialState: dict) -> list {
 # Executes effectFn and re-runs when tracked signals change
 def createEffect(effectFn: any) -> None {
     __jacRunEffect(effectFn);
+}
+
+# Run effect once when component mounts (similar to useEffect with empty deps)
+# Executes mountFn once when the component first renders
+def onMount(mountFn: any) -> None {
+    currentComponent = __jacReactiveContext.currentComponent;
+    if not currentComponent {
+        # Not in a component context, run immediately
+        __jacRunEffect(mountFn);
+        return;
+    }
+
+    # Track mounted components
+    if not __jacReactiveContext.mountedComponents {
+        __jacReactiveContext.mountedComponents = {};
+    }
+
+    # Check if this component has already mounted
+    componentId = f"{currentComponent}";
+    if not __jacHasOwn(__jacReactiveContext.mountedComponents, componentId) {
+        # Mark as mounted and run the effect
+        __jacReactiveContext.mountedComponents[componentId] = True;
+
+        # Run in next tick to ensure component is fully rendered
+        try {
+            setTimeout(lambda -> None {
+                __jacRunEffect(mountFn);
+            }, 0);
+        } except Exception {
+            # Fallback if setTimeout not available
+            __jacRunEffect(mountFn);
+        }
+    }
 }
 
 # Internal: Track component dependencies
@@ -385,7 +419,7 @@ def __jacGetHashPath() -> str {
 # Walker spawn function
 # ============================================================================
 
-async def __jacSpawn(walker: str, fields: dict = {}) -> any {
+async def __jacSpawn(walker: str, fields: dict = {}, nd: str  | None = None) -> any {
     token = __getLocalStorage("jac_token");
 
     response = await fetch(
@@ -396,7 +430,7 @@ async def __jacSpawn(walker: str, fields: dict = {}) -> any {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {token}" if token else ""
             },
-            "body": JSON.stringify({"nd": "root", **fields})
+            "body": JSON.stringify({"nd": nd if nd else "root", **fields})
         }
     );
 
@@ -840,10 +874,6 @@ def __jacEnsureHydration(moduleName: str) -> None {
             {"once": True}
         );
     }
-
-    if documentRef.readyState != "loading" {
-        __jacExecuteHydration();
-    }
 }
 
 def __jacRegisterClientModule(
@@ -895,6 +925,9 @@ def __jacRegisterClientModule(
     moduleRecord.functions = registeredFunctions;
     moduleRecord.globals = globalNames;
     moduleRecord.defaults = globalsMap;
+
+
+    # 1. Ensure the module is written to the registry FIRST.
     registry.modules[moduleName] = moduleRecord;
 
     stateGlobals = registry.state.globals;
@@ -902,6 +935,7 @@ def __jacRegisterClientModule(
         stateGlobals[moduleName] = {};
     }
 
+    # 2. ONLY THEN, trigger the hydration/lookup process.
     __jacEnsureHydration(moduleName);
 }
 }
