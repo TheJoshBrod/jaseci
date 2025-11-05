@@ -72,6 +72,7 @@ nav:
         - "learn/jac-cloud/utilities.md"
       - Jac Lens: "learn/jac-lens.md"
     - Tooling:
+      - Jac Debugger: "learn/debugger.md"
       - Run Jac In Browser: "learn/jac_playground.md"
       - "learn/tools/cli.md"
       - "learn/tools/jac_serve.md"
