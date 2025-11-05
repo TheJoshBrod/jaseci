@@ -115,9 +115,9 @@ Below are some examples of how to use the Jac Debugger
 
 Breakpoints pause the program so you can:
 
-- inspect variables,
-- check logic,
-- watch execution line-by-line.
+- Inspect variables
+- Check logic
+- Watch execution line-by-line
 
 Example program with a function we want to debug:
 
@@ -135,16 +135,22 @@ When the program reaches the breakpoint, it will pause. You’ll see:
 
 *Debugger Options* (in green):
 
-- Continue: Run until next breakpoint or program ends.
-- Step Over: Execute the next line (skip over function calls).
-- Step Into: Execute the next line or enter called functions.
-- Step Out: Run until the current function returns.
-- Restart: Rerun the program from the start.
-- Stop: Halt the program and exit the debugger.
+| Debugger Action | What It Does                                            |
+| --------------- | ------------------------------------------------------- |
+| **Continue**    | Runs until the next breakpoint or the program ends.     |
+| **Step Over**   | Executes the next line, *skipping into* function calls. |
+| **Step Into**   | Executes the next line and *enters* called functions.   |
+| **Step Out**    | Runs until the current function returns.                |
+| **Restart**     | Restarts the program from the beginning.                |
+| **Stop**        | Halts execution and exits the debugger.                 |
+
 
 *Variable Viewer* (in red):
 
-These are the current values of all local and global variables the program is using when running. Use these to understand what is happening and what is the state of the program at any given breakpoint.
+| Type                 | Meaning                                                                                  | Where They Can Be Used                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Local Variables**  | Variables created **inside a function**. They exist only while that function is running. | Only inside that specific function. They cannot be accessed from outside.                                     |
+| **Global Variables** | Variables defined **outside all functions**, at the top level of the program.            | Can be accessed from anywhere in the program (functions can read them, and write to them if declared global). |
 
 ![Options with debugger](assets/debugger/debugger-complex_function-options.png)
 
