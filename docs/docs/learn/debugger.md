@@ -177,13 +177,12 @@ Next we can set a break point in our code as shown below. Then we run the debugg
 Then we can step through the program as normal and new nodes should appear as follows:
 
 
-<iframe width="640" height="360"
-    src="https://www.youtube.com/watch?v=2V02bv7k1UA"
+<iframe width="560" height="315"
+    src="https://www.youtube.com/embed/9bdZn4Zvf9M?si=da8VXiIYaKK1hxMo"
     title="YouTube video player"
     frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"
     allowfullscreen>
-</iframe>
 
 
 As shown in the video, these nodes will show their values and can be dragged around to better visualize the data. 
