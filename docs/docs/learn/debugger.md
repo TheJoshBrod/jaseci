@@ -35,11 +35,14 @@ Once installed, follow the video below:
 2. Search for "breakpoints"
 3. Select `Debug: Allow Breakpoints Everywhere`
 
-_TODO: insert video here_
-<video width="640" height="360" controls>
-  <source src="assets/debugger/1030.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<iframe width="640" height="360"
+    src="https://www.youtube.com/embed/2V02bv7k1UA"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+</iframe>
+
 
 ### Jac Debugger Setup
 
@@ -173,11 +176,14 @@ Next we can set a break point in our code as shown below. Then we run the debugg
 
 Then we can step through the program as normal and new nodes should appear as follows:
 
-_TODO: insert video here_
-<video width="640" height="360" controls>
-  <source src="assets/debugger/1030.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+
+<iframe width="640" height="360"
+    src="https://www.youtube.com/watch?v=D2A64InPdlE"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+</iframe>
 
 
 As shown in the video, these nodes will show their values and can be dragged around to better visualize the data. 
