@@ -4,6 +4,37 @@
 !!! note 
     This tutorial goes over the Jac Extension for locally debugging your Jac program. If you are interested in using an online debugger checkout [Jac Playground](https://www.jac-lang.org/playground/)
 
+
+!!! tldr
+    If you already have some development experience, here's a quick guide to get the debugger running. 
+
+    (If not no worries! The rest of the tutorial walks through each step in detail.)
+
+    - Install Python 3.12+
+    - Install jaclang
+    - Install VS Code + Jac extension
+    - Create launch.json (Debug and Run -> Create launch.json -> Jac Debug)
+    - Open VS Code Command Palette and run jacvis for graph visualization
+    - Set a breakpoint -> Run Debugger -> Inspect variables
+    
+## What is the Jac Debugger?
+
+The Jac Debugger helps you find and fix issues in Jac programs. It supports:
+
+- Breakpoints  
+- Step-through execution  
+- Variable inspection  
+- Graph visualization (unique to Jac)
+
+In this tutorial, we’ll walk through how to set up the debugger and demonstrate how to use its features.
+
+
+## Setup (one time)
+---
+
+!!! info
+    Complete these steps once per computer.
+
 !!! important
     **Required** (Follow [setup](#setup-one-time) if any requirement is missing):
 
@@ -17,33 +48,6 @@
 
     - **Jac VS Code extension installed**
         - In VS Code → Extensions tab → search **"Jac"** and install
-
-    
-## What is the Jac Debugger?
-
-The Jac Debugger helps you find and fix issues in Jac programs. It supports:
-
-- Breakpoints  
-- Step-through execution  
-- Variable inspection  
-- Graph visualization (unique to Jac)
-
-In this tutorial, we’ll walk through how to set up the debugger and demonstrate how to use its features.
-
-## Quick Start (TL;DR)
-
-- Install Python 3.12+
-- Install jaclang
-- Install VS Code + Jac extension
-- Create launch.json (Debug and Run -> Create launch.json -> Jac Debug)
-- Open VS Code Command Palette and run jacvis for graph visualization
-- Set a breakpoint -> Run Debugger -> Inspect variables
-
-## Setup (one time)
----
-
-!!! info
-    Complete these steps once per computer.
 
 ### VS Code Setup
 
