@@ -13,6 +13,7 @@ nav:
       - Native Superset of Python: "learn/superset_python.md"
       - Jac Library in Pure Python: "learn/library_mode.md"
       - Learn Jac in 5 Minutes: "learn/jac_in_a_flash.md"
+      - Jac Tool Suite: "learn/tool_suite.md"
     - The Jac Book:
       - Introduction: "jac_book/index.md"
       - 1. Welcome to Jac: "jac_book/chapter_1.md"
