@@ -5,7 +5,7 @@
 
 <div class="grid cards" markdown>
 
--   **RPG Game Level Genaration**
+-   **RPG Game Level Generation**
 
     ---
 
@@ -13,7 +13,7 @@
 
     [Start](./../../examples/mtp_examples/rpg_game/){ .md-button }
 
--   **Fantacy Trading Game**
+-   **Fantasy Trading Game**
 
     ---
 
@@ -21,7 +21,7 @@
 
     [Start](./../../examples/mtp_examples/fantasy_trading_game/){ .md-button }
 
--   **AI-Powered Multimodal MCP Chatbot**
+-   **AI-Powered Multi-modal MCP Chatbot**
 
     ---
 
@@ -59,7 +59,7 @@ Examples that demonstrate multimodal usage (images and video) with byLLM and vis
 
 Repository location: [jac-byllm/examples/vision](https://github.com/Jaseci-Labs/jaseci/tree/main/jac-byllm/examples/vision)
 
-??? note "Vision / Multimodal examples (code)"
+??? note "Vision / Multi-modal examples (code)"
     Vision-enabled examples that combine image/video inputs with byLLM workflows. Only the Jac code files are shown below; accompanying media are in the examples folder (e.g. `person.png`, `receipt.jpg`, `mugen.mp4`).
 
     === "math_solver.jac"
