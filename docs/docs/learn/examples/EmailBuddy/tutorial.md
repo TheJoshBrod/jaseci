@@ -26,9 +26,9 @@ Object Spatial Programming (OSP) is a programming paradigm where software logic 
 
 #### Why Object-Spatial Programming Fits EmailBuddy
 
-EmailBuddy uses this programming paradigm to structure the relationship between people and their emails. 
+EmailBuddy uses this programming paradigm to structure the relationship between people and their emails.
 
-We can represent both emails and people as nodes on a graph. Each node can contain information relevant to itself as shown below: 
+We can represent both emails and people as nodes on a graph. Each node can contain information relevant to itself as shown below:
 
 ```Jac
 node Person{
@@ -58,7 +58,7 @@ We may imagine a graph like the following below
 ![Diagram showing how people point to emails (sender) and emails point to people (recipients)](assets/EmailBuddy-osp_diagram.png)
 
 
-#### How EmailBuddy sets up the Object-Spatial graph 
+#### How EmailBuddy sets up the Object-Spatial graph
 
 Now that we have a high-level understanding how to represent these Email/People node interactions, how can we actually implement this?
 
@@ -67,7 +67,7 @@ EmailBuddy has two main user-interactions:
 1. Upload emails
 2. Query chatbot
 
-First we will talk about uploading emails. 
+First we will talk about uploading emails.
 
 EmailBuddy handles email uploads by allowing users to upload a json file in the following format:
 
@@ -83,7 +83,7 @@ EmailBuddy handles email uploads by allowing users to upload a json file in the 
 ]
 ```
 
-These json files are parsed in Jac and are used to create our nodes. We handle node creation by treating our 2 node types (Person & Email) as 3 (Sender, Recipients, & Email). 
+These json files are parsed in Jac and are used to create our nodes. We handle node creation by treating our 2 node types (Person & Email) as 3 (Sender, Recipients, & Email).
 
 
 For each email uploaded, EmailBuddy:
@@ -127,25 +127,25 @@ for node in recipientNodes{
 With these steps we will have a connected graph representation of our emails for us to traverse.
 
 
-#### How EmailBuddy uses the graph 
+#### How EmailBuddy uses the graph
 
-Once our graph is created, we can traverse it using walkers. 
+Once our graph is created, we can traverse it using walkers.
 
-??? tip "What is a walker?" 
+??? tip "What is a walker?"
     A walker is a program that moves through a Jac graph and executes code at each node.
-  
+
     A walker is like a little robot that moves through your graph.
-    
+
     As it moves, it can:
-  
+
     - look at data on a node
     - save information
     - change data
     - create new nodes
-  
+
     Think of it like a character exploring a map.
     Instead of a function pushing data around, the walker visits the data itself.
-  
+
 EmailBuddy uses a few helper walkers to answer questions like:
 
 - "Does this sender already exist?"
@@ -178,7 +178,7 @@ walker FindSenderNode {
             self.person = here;
             disengage;
         }
-    }    
+    }
 }
 ```
 
@@ -191,7 +191,7 @@ walker FindSenderNode {
 
 This walkers goal is to find a specific Person node and return the value. The walker will search through ALL people nodes connected to root until it finds its target or runs out of People to search. If the walker does not find a matching Person node, self.person stays None.
 
-When the FindSenderNode walker is initialized, the walker is passed a target email address as a member variable to find a Person node attached to it. 
+When the FindSenderNode walker is initialized, the walker is passed a target email address as a member variable to find a Person node attached to it.
 
 ```Jac
 FindSend = FindSenderNode(target=sender_email);
@@ -256,7 +256,7 @@ This is powered by Jac's byllm feature. byllm allows developers to define a func
 
 ##### 1. Information Collection
 
-Before the the agent can make a decisions, it needs to receive context of the walker's position and previous knowledge. The LLM agent should receive only the most important information, not large amounts of repetitive or irrelevant text. One way to accomplish this is by summarizing what the agent has discovered so far. 
+Before the the agent can make a decisions, it needs to receive context of the walker's position and previous knowledge. The LLM agent should receive only the most important information, not large amounts of repetitive or irrelevant text. One way to accomplish this is by summarizing what the agent has discovered so far.
 
 As the Walker moves through the graph, it may encounter nodes with a large amount of information, for example, a person who has sent many emails. Passing all of that content directly to the LLM would quickly overwhelm the context window. Instead, a separate summarization agent reviews the existing findings and conversation history, then condenses them into a short, meaningful summary. This keeps the LLM's working memory efficient, even as the exploration continues and more data is discovered.
 
