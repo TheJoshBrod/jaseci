@@ -8,7 +8,8 @@ nav:
     # - Getting Started: "learn/getting_started.md"
     - Getting Started:
       - Installation: "learn/installation.md"
-      - Jac as Your First Programming Language: "learn/beginners_guide_to_jac.md"
+      - Quickstart: "learn/quickstart.md"
+      # - Jac as Your First Programming Language: "learn/beginners_guide_to_jac.md"
       - Syntax Quick Reference: "learn/quick_reference.md"
       - Native Superset of Python: "learn/superset_python.md"
       - Jac Library in Pure Python: "learn/library_mode.md"
@@ -51,6 +52,7 @@ nav:
         - byLLM: "learn/jac-byllm/with_llm.md"
         - Quick-start: "learn/jac-byllm/quickstart.md"
         - How to use byLLM: "learn/jac-byllm/usage.md"
+        - byLLM for Agentic AI: "learn/jac-byllm/agentic_ai.md"
         - Examples: "learn/jac-byllm/examples.md"
         - Python byllm Interface: "learn/jac-byllm/python_integration.md"
         - Using Multimodal models: "learn/jac-byllm/multimodality.md"
@@ -74,12 +76,32 @@ nav:
         - "learn/jac-cloud/deployment.md"
         - "learn/jac-cloud/utilities.md"
       - Jac Lens: "learn/jac-lens.md"
+    - Jac Client:
+      - Getting Started: "jac-client/README.md"
+      - Step-by-Step Tutorial:
+        - Introduction: "jac-client/guide-example/intro.md"
+        - "Step 1: Project Setup": "jac-client/guide-example/step-01-setup.md"
+        - "Step 2: First Component": "jac-client/guide-example/step-02-components.md"
+        - "Step 3: Styling": "jac-client/guide-example/step-03-styling.md"
+        - "Step 4: Todo UI": "jac-client/guide-example/step-04-todo-ui.md"
+        - "Step 5: Local State": "jac-client/guide-example/step-05-local-state.md"
+        - "Step 6: Event Handlers": "jac-client/guide-example/step-06-events.md"
+        - "Step 7: Effects": "jac-client/guide-example/step-07-effects.md"
+        - "Step 8: Backend with Walkers": "jac-client/guide-example/step-08-walkers.md"
+        - "Step 9: Authentication": "jac-client/guide-example/step-09-authentication.md"
+        - "Step 10: Routing": "jac-client/guide-example/step-10-routing.md"
+        - "Step 11: Final Integration": "jac-client/guide-example/step-11-final.md"
+      - Routing: "jac-client/routing.md"
+      - Lifecycle Hooks: "jac-client/lifecycle-hooks.md"
+      - Advanced State: "jac-client/advanced-state.md"
+      - Imports: "jac-client/imports.md"
     - Tooling:
       - Jac Debugger: "learn/debugger.md"
       - Run Jac In Browser: "learn/jac_playground.md"
       - "learn/tools/cli.md"
       - "learn/tools/jac_serve.md"
       - "learn/tools/streamlit.md"
+      - LLMDocs: "learn/tools/llmdocs.md"
     - Examples:
       - LittleX (your own twitter): "learn/examples/littleX/tutorial.md"
       - Jac MCP Conversational Chatbot: "learn/examples/rag_chatbot/Overview.md"
@@ -267,10 +289,13 @@ extra_javascript:
   - js/jac.monarch.js
   - js/run-code.js
   - js/feedback.js
+  - js/logo.js
 
 plugins:
   - search
-  - open-in-new-tab
+  - open-in-new-tab:
+      excluded_selectors:
+        - .md-logo
   - mkdocs-video:
       is_video: True
       video_autoplay: True

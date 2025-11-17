@@ -9,6 +9,10 @@ from jaclang.compiler.program import JacProgram
 class TypeCheckerPassTests(TestCase):
     """Test class obviously."""
 
+    def _assert_error_pretty_found(self, needle: str, haystack: str) -> None:
+        for line in [line.strip() for line in needle.splitlines() if line.strip()]:
+            self.assertIn(line, haystack, f"Expected line '{line}' not found in:\n{haystack}")
+
     def test_explicit_type_annotation_in_assignment(self) -> None:
         """Test explicit type annotation in assignment."""
         program = JacProgram()
@@ -36,7 +40,6 @@ class TypeCheckerPassTests(TestCase):
             s: str = pi;   # <-- Error
             ^^^^^^^^^^^
         """, program.errors_had[0].pretty_print())
-
 
     def test_infer_type_of_assignment(self) -> None:
         program = JacProgram()
@@ -409,6 +412,213 @@ class TypeCheckerPassTests(TestCase):
         TypeCheckPass(ir_in=mod, prog=program)
         self.assertEqual(len(program.errors_had), 0)
 
-    def _assert_error_pretty_found(self, needle: str, haystack: str) -> None:
-        for line in [line.strip() for line in needle.splitlines() if line.strip()]:
-            self.assertIn(line, haystack, f"Expected line '{line}' not found in:\n{haystack}")
+    def test_get_type_of_iife_expression(self) -> None:
+        path = self.fixture_abs_path("checker_iife_expression.jac")
+        program = JacProgram()
+        mod = program.compile(path)
+        TypeCheckPass(ir_in=mod, prog=program)
+        self.assertEqual(len(program.errors_had), 0)
+
+    def test_param_arg_match(self) -> None:
+        program = JacProgram()
+        path = self.fixture_abs_path("checker_generics.jac")
+        mod = program.compile(path)
+        TypeCheckPass(ir_in=mod, prog=program)
+        self.assertEqual(len(program.errors_had), 9)
+
+        expected_errors = [
+            """
+            Cannot assign <class Foo> to <class str>
+                for it in tl {
+                    tifoo: Foo = it;
+                    tistr: str = it; # <-- Error
+                    ^^^^^^^^^^^^^^^^
+                }
+            }
+            """,
+            """
+            Cannot assign <class Foo> to <class str>
+                lst: list[Foo] = [Foo(), Foo()];
+                f: Foo = lst[0];  # <-- Ok
+                s: str = lst[0];  # <-- Error
+                ^^^^^^^^^^^^^^^^
+
+                for it in lst {
+            """,
+            """
+            Cannot assign <class Foo> to <class str>
+                for it in lst {
+                    tifoo: Foo = it; # <-- Ok
+                    tistr: str = it; # <-- Error
+                    ^^^^^^^^^^^^^^^^
+                }
+
+            """,
+            """
+            Cannot assign <class int> to <class str>
+                m: list[int] = [1, 2, 3];
+                n: int = m[0];
+                p: str = m[0];  # <-- Error
+                ^^^^^^^^^^^^^^
+
+                x: list[str] = ["a", "b", "c"];
+            """,
+            """
+            Cannot assign <class str> to <class int>
+                x: list[str] = ["a", "b", "c"];
+                y: str = x[1];
+                z: int = x[1];  # <-- Error
+                ^^^^^^^^^^^^^^
+
+                d: dict[int, str] = {1: "one", 2: "two"};
+            """,
+            """
+            Cannot assign <class str> to <class int>
+                d: dict[int, str] = {1: "one", 2: "two"};
+                s: str = d[1];
+                i: int = d[1]; # <-- Error
+                ^^^^^^^^^^^^^^
+
+                ht = HashTable[int, str]();
+            """,
+            """
+            Cannot assign <class str> to parameter 'key' of type <class int>
+                ht = HashTable[int, str]();
+                ht.insert(1, "one");
+                ht.insert("one", "one");  # <-- Error
+                        ^^^^^
+                ht.insert(1, 1);          # <-- Error
+
+            """,
+            """
+            Cannot assign <class int> to parameter 'value' of type <class str>
+                ht.insert(1, "one");
+                ht.insert("one", "one");  # <-- Error
+                ht.insert(1, 1);          # <-- Error
+                            ^
+
+                hv1: str = ht.get(1);
+            """,
+            """
+            Cannot assign <class str> to <class int>
+
+                hv1: str = ht.get(1);
+                hv2: int = ht.get(1);  # <-- Error
+                ^^^^^^^^^^^^^^^^^^^^^
+
+            }
+            """,
+        ]
+
+        for i, expected in enumerate(expected_errors):
+            self._assert_error_pretty_found(expected, program.errors_had[i].pretty_print())
+
+    def test_return_type(self) -> None:
+        program = JacProgram()
+        path = self.fixture_abs_path("checker_return_type.jac")
+        mod = program.compile(path)
+        TypeCheckPass(ir_in=mod, prog=program)
+        self.assertEqual(len(program.errors_had), 4)
+
+        expected_errors = [
+            """
+            Cannot return <class int>, expected <class NoneType>
+            def foo() {
+                return 1;    # <-- Error
+                ^^^^^^^^^
+                return;      # <-- Ok
+                return "";   # <-- Error
+            """,
+            """
+            Cannot return <class str>, expected <class NoneType>
+                return 1;    # <-- Error
+                return;      # <-- Ok
+                return "";   # <-- Error
+                ^^^^^^^^^^
+                return None; # <-- Ok
+            }
+            """,
+            """
+            Cannot return <class str>, expected <class int>
+
+            def bar() -> int {
+                return "";  # <-- Error
+                ^^^^^^^^^^
+                return 1;   # <-- Ok
+                return 1.1; # <-- Error
+                """,
+            """
+            Cannot return <class float>, expected <class int>
+                return "";  # <-- Error
+                return 1;   # <-- Ok
+                return 1.1; # <-- Error
+                ^^^^^^^^^^^
+            }
+            """,
+        ]
+
+        for i, expected in enumerate(expected_errors):
+            self._assert_error_pretty_found(expected, program.errors_had[i].pretty_print())
+
+    def test_connect_typed(self) -> None:
+        program = JacProgram()
+        path = self.fixture_abs_path("checker_connect_typed.jac")
+        mod = program.compile(path)
+        TypeCheckPass(ir_in=mod, prog=program)
+        # Expect three errors: wrong edge type usage and node class operands
+        self.assertEqual(len(program.errors_had), 3)
+
+    def test_connect_filter(self) -> None:
+        program = JacProgram()
+        path = self.fixture_abs_path("checker_connect_filter.jac")
+        mod = program.compile(path)
+        TypeCheckPass(ir_in=mod, prog=program)
+        self.assertEqual(len(program.errors_had), 7)
+
+        expected_errors = [
+            """
+            Connection type must be an edge instance
+                a_inst +>:edge_inst:+> b_inst; # Ok
+                a_inst +>:NodeA:+> b_inst;     # Error
+                          ^^^^^
+            """,
+            """
+            Connection left operand must be a node instance
+                a_inst +>:NodeA:+> b_inst;     # Error
+                NodeA +>:MyEdge:+> b_inst;     # Error
+                ^^^^^
+            """,
+            """
+            Connection right operand must be a node instance
+                NodeA +>:MyEdge:+> b_inst;     # Error
+                a_inst +>:MyEdge:+> NodeB;     # Error
+                                    ^^^^^
+            """,
+            """
+            Edge type "<class MyEdge>" has no member named "not_mem"
+                # Assign compr in edges
+                a_inst +>:MyEdge:id=1, not_mem="some":+> b_inst; # Error
+                                       ^^^^^^^
+            """,
+            """
+            Member "not_exist not found on type <class Book>"
+                lst(=title="Parry Potter", author="K.J. Bowling", year=1997); # Ok
+                lst(=not_exist="some");  # Error
+                     ^^^^^^^^^
+            """,
+            """
+            Type "<class str> is not assignable to type <class int>"
+                lst(=not_exist="some");  # Error
+                lst(=year="Type Error"); # Error
+                          ^^^^^^^^^^^^
+            """,
+            """
+            Member "not_exists not found on type <class MyEdge>"
+                [->:MyEdge:id == 1:->]; # Ok
+                [->:MyEdge:not_exists >= 1:->]; # Error
+                           ^^^^^^^^^^
+            """,
+        ]
+
+        for i, expected in enumerate(expected_errors):
+            self._assert_error_pretty_found(expected, program.errors_had[i].pretty_print())

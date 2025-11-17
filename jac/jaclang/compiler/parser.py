@@ -70,6 +70,9 @@ class JacParser(Transform[uni.Source, uni.Module]):
         self.mod_path = root_ir.loc.mod_path
         self.node_list: list[uni.UniNode] = []
         self._node_ids: set[int] = set()
+
+        if cancel_token and cancel_token.is_set():
+            return
         Transform.__init__(self, ir_in=root_ir, prog=prog, cancel_token=cancel_token)
 
     def transform(self, ir_in: uni.Source) -> uni.Module:
@@ -165,12 +168,12 @@ class JacParser(Transform[uni.Source, uni.Module]):
             return True
 
         if isinstance(e, jl.UnexpectedToken):
-            # If last token is DOT and we expect a NAME, insert a NAME token
             last_tok: jl.Token | None = (
                 e.token_history[-1]
                 if e.token_history and len(e.token_history) >= 1
                 else None
             )
+            # If last token is DOT and we expect a NAME, insert a NAME token
             if (
                 last_tok
                 and last_tok.type == Tok.DOT.name
